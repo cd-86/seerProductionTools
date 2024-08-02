@@ -327,7 +327,7 @@ class Thread(QThread):
         gridLayout.addWidget(QLabel(f"{self.robot_status_battery_info.get('max_charge_current', 0):.2f} A"), row, 1)
         hLayout.addWidget(statusGroup)
         # 机器人基本信息
-        statusGroup = QGroupBox("机器人运行状态")
+        statusGroup = QGroupBox("机器人基本信息")
         gridLayout = QGridLayout(statusGroup)
         gridLayout.setAlignment(Qt.AlignmentFlag.AlignTop)
         row = 0

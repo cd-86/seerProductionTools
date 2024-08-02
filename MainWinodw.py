@@ -1,18 +1,17 @@
 from PySide6.QtCore import Slot
-from PySide6.QtGui import QIcon, Qt
-from PySide6.QtWidgets import QMainWindow, QDialog, QVBoxLayout, QGroupBox, QGridLayout, QLabel, QLineEdit, QPushButton, \
-    QCheckBox, QSpinBox, QDoubleSpinBox, QTabWidget, QDockWidget, QListWidget, QListWidgetItem, QComboBox, QToolButton, \
-    QFileDialog
+from PySide6.QtGui import Qt
+from PySide6.QtWidgets import QMainWindow, QTabWidget, QDockWidget, QListWidget, QListWidgetItem
+
 import tools
-from SettingDialog import SettingDialog
-from init import cfg, printLog
 from LogView import LogView
+from SettingDialog import SettingDialog
+from init import printLog, VERSION
 
 
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle('生产工具')
+        self.setWindowTitle(f'生产工具 - v{VERSION}')
         self.resize(640, 480)
         self.initUI()
 

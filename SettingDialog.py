@@ -56,6 +56,7 @@ class SettingDialog(QDialog):
                     w.setValue(v)
                 elif d["value"] == "float":
                     w = QDoubleSpinBox()
+                    w.setDecimals(6)
                     w.setRange(d["minValue"], d["maxValue"])
                     try:
                         v = float(cfg[c, k])

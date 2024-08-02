@@ -4,6 +4,12 @@ from datetime import datetime
 
 from PySide6.QtCore import QObject, Signal, QDateTime, QTemporaryDir
 
+VERSION_MAJOR = 0
+VERSION_MINOR = 0
+VERSION_PATCH = 0
+VERSION_NUMBER = 0
+
+VERSION = f"{VERSION_MAJOR}.{VERSION_MINOR}.{VERSION_PATCH}"
 
 class __Obj__(QObject):
     sigPrintLog = Signal(object)
@@ -62,6 +68,7 @@ cfg = __CFG__()
 tempDir: QTemporaryDir = QTemporaryDir()
 if not tempDir.isValid():
     printLog("创建临时目录失败！")
+
 
 def clearn():
     tempDir.remove()

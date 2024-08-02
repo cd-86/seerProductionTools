@@ -11,6 +11,7 @@ VERSION_NUMBER = 0
 
 VERSION = f"{VERSION_MAJOR}.{VERSION_MINOR}.{VERSION_PATCH}"
 
+
 class __Obj__(QObject):
     sigPrintLog = Signal(object)
 

@@ -7,7 +7,7 @@ from PySide6.QtGui import QPainter, QPixmap, QPen, QImage, QColor
 from PySide6.QtMultimedia import QMediaDevices, QMediaCaptureSession, QCamera, QImageCapture
 from PySide6.QtMultimediaWidgets import QVideoWidget
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLineEdit, QLabel, QPushButton, QGroupBox, QFileDialog, \
-    QDialog, QGridLayout, QFrame, QSizePolicy, QScrollArea
+    QDialog, QGridLayout, QFrame, QSizePolicy, QScrollArea, QStyleOption, QStyleOptionViewItem, QStyle
 
 from init import printLog, cfg, tempDir
 from lib.RBKUtils import RBKUtils
@@ -24,6 +24,8 @@ class PictureViewer(QWidget):
 
         self.pixmap: QPixmap = None
         self.prePos = QPoint(0, 0)
+        self.setAttribute(Qt.WidgetAttribute.WA_StyleSheet, True)
+        self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, True)
 
     def setPixmap(self, pixmap: QPixmap):
         self.pixmap = pixmap
@@ -32,9 +34,9 @@ class PictureViewer(QWidget):
 
     def paintEvent(self, event):
         painter = QPainter(self)
-        rect = self.rect() - QMargins(0, 0, 1, 1)
         painter.save()
         if self.pixmap is not None and self.pixmap.width() != 0 and self.pixmap.height() != 0:
+            rect = self.rect() - QMargins(0, 0, 1, 1)
             painter.translate(rect.center())
             painter.translate(self.translate)
             v = min(rect.width() / self.pixmap.width(), rect.height() / self.pixmap.height())
@@ -42,11 +44,10 @@ class PictureViewer(QWidget):
             painter.scale(self.scale, self.scale)
             painter.translate(-self.pixmap.width() / 2, -self.pixmap.height() / 2)
             painter.drawPixmap(self.pixmap.rect(), self.pixmap)
-        painter.restore()
-        painter.setPen(QPen(Qt.GlobalColor.white, 7))
-        painter.drawRect(rect)
-        painter.setPen(QPen(Qt.GlobalColor.black))
-        painter.drawRect(rect)
+            painter.restore()
+        opt = QStyleOption()
+        opt.initFrom(self)
+        self.style().drawPrimitive(QStyle.PrimitiveElement.PE_Widget, opt, painter, self);
 
     def wheelEvent(self, event):
         if self.pixmap is not None:
@@ -148,6 +149,12 @@ class PictureWidgetPrivate(QWidget):
 
         self.localButton.clicked.connect(self.localButtonClicked)
         self.shootButton.clicked.connect(self.shootButtonClicked)
+
+        self.setStyleSheet("""
+        PictureViewer {
+            border: 2px solid rgb(0, 0, 0);
+        }
+        """)
 
     @property
     def picturePath(self):

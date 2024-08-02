@@ -12,7 +12,7 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle(f'生产工具 - v{VERSION}')
-        self.resize(640, 480)
+        self.resize(1280, 960)
         self.initUI()
 
     def initUI(self):

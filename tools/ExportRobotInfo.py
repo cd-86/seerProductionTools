@@ -2,8 +2,8 @@ import json
 import socket
 from datetime import datetime
 
-from PySide6.QtCore import QDir, QMargins, Qt, QPoint, Slot, QThread, QFile, QFileInfo
-from PySide6.QtGui import QPainter, QPixmap, QPen, QImage, QColor
+from PySide6.QtCore import QDir, QMargins, Qt, QPoint, Slot, QThread, QFile, QFileInfo, QRegularExpression
+from PySide6.QtGui import QPainter, QPixmap, QPen, QImage, QColor, QIntValidator, QRegularExpressionValidator
 from PySide6.QtMultimedia import QMediaDevices, QMediaCaptureSession, QCamera, QImageCapture
 from PySide6.QtMultimediaWidgets import QVideoWidget
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLineEdit, QLabel, QPushButton, QGroupBox, QFileDialog, \
@@ -77,6 +77,7 @@ class CameraViewer(QDialog):
         self.isFinished = False
 
     def initUI(self):
+        self.setWindowTitle("相机")
         self.resize(640, 480)
         layout = QVBoxLayout(self)
         self.captureSession = QMediaCaptureSession()
@@ -513,7 +514,8 @@ class ExportRobotInfo(QWidget):
 
         hLayout = QHBoxLayout()
         hLayout.addWidget(QLabel("IP:"))
-        self.ipLineEdit = QLineEdit("192.168.128.6")
+        self.ipLineEdit = QLineEdit("192.168.192.5")
+        self.ipLineEdit.setValidator(QRegularExpressionValidator(QRegularExpression(r"((2(5[0-5]|[0-4]\d))|[0-1]?\d{1,2})(\.((2(5[0-5]|[0-4]\d))|[0-1]?\d{1,2})){3}"), self))
         hLayout.addWidget(self.ipLineEdit)
         self.getInfoButton = QPushButton("获取配置信息")
         self.saveButton = QPushButton("导出机器人配置信息")

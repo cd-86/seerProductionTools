@@ -219,6 +219,8 @@ class Thread(QThread):
             self.robot_status_alarm_info = json.loads(data)
         except Exception as e:
             printLog("Exception:,", e)
+            self.widgetPixmap = None
+            return
         else:
             printLog(f"关闭连接 {self.ip}:19204")
             so.close()
@@ -235,6 +237,8 @@ class Thread(QThread):
             self.robot_core_robod_version_info = json.loads(data)
         except Exception as e:
             printLog("Exception:,", e)
+            self.widgetPixmap = None
+            return
         else:
             printLog(f"关闭连接 {self.ip}:19208")
             so.close()
@@ -544,6 +548,7 @@ class ExportRobotInfo(QWidget):
         self.saveButton.clicked.connect(self.slotSaveButtonClicked)
 
     def slotGetInfoButtonClicked(self):
+        self.infoLabel.clear()
         self.workThread.ip = self.ipLineEdit.text()
         self.workThread.start()
         self.getInfoButton.setEnabled(False)
@@ -584,7 +589,8 @@ class ExportRobotInfo(QWidget):
 
 
     def slotWorkThreadFinished(self):
-        self.infoLabel.setPixmap(self.workThread.widgetPixmap)
+        if self.workThread.widgetPixmap is not None:
+            self.infoLabel.setPixmap(self.workThread.widgetPixmap)
         self.getInfoButton.setEnabled(True)
         self.saveButton.setEnabled(True)
 

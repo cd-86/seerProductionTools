@@ -2,12 +2,12 @@ import configparser
 import inspect
 from datetime import datetime
 
-from PySide6.QtCore import QObject, Signal, QDateTime, QTemporaryDir
+from PySide6.QtCore import QObject, Signal, QTemporaryDir
 
 VERSION_MAJOR = 0
 VERSION_MINOR = 0
-VERSION_PATCH = 1
-VERSION_NUMBER = 1
+VERSION_PATCH = 2
+VERSION_NUMBER = 2
 
 VERSION = f"{VERSION_MAJOR}.{VERSION_MINOR}.{VERSION_PATCH}"
 

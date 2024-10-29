@@ -5,9 +5,9 @@ from datetime import datetime
 from PySide6.QtCore import QObject, Signal, QTemporaryDir
 
 VERSION_MAJOR = 0
-VERSION_MINOR = 0
-VERSION_PATCH = 2
-VERSION_NUMBER = 2
+VERSION_MINOR = 1
+VERSION_PATCH = 3
+VERSION_NUMBER = 4
 
 VERSION = f"{VERSION_MAJOR}.{VERSION_MINOR}.{VERSION_PATCH}"
 
@@ -30,7 +30,6 @@ def printLog(*args):
     else:
         for i in args:
             s += str(i) + " "
-        s = s[:-1]
     __obj__.sigPrintLog.emit(f"{tm}\t{s}")
 
     # 获取当前堆栈帧

@@ -21,8 +21,8 @@ class RBKUtils:
         return struct.unpack(PACK_FMT_STR, data)
 
     @staticmethod
-    def request(so: socket, number, data: bytes = None):
-        req = RBKUtils.pack(number, data)
+    def request(so: socket, number, data: bytes = None, id=1):
+        req = RBKUtils.pack(number, data, id)
         so.sendall(req)
         # 接收报文头
         headData = so.recv(16)

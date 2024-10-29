@@ -414,7 +414,10 @@ class Thread(QThread):
         for feature in self.robot_status_info.get('features', []):
             if not isinstance(feature, dict):
                 continue
-            gridLayout.addWidget(QLabel(feature.get("name", "")), row, 0)
+            name = feature.get("name", "")
+            if name == "rbk_diff":
+                name = "base_func"
+            gridLayout.addWidget(QLabel(name), row, 0)
             gridLayout.addWidget(
                 QLabel(f"已激活({feature.get('expiry_date', '')})" if feature.get("active", False) else "未激活"), row,
                 1)

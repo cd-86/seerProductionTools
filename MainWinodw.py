@@ -57,6 +57,7 @@ class MainWindow(QMainWindow):
     def listWidgetItemDoubleClicked(self, item: QListWidgetItem):
         w = item.cls()
         self.tabWidget.addTab(w, w.META["title"])
+        self.tabWidget.setCurrentWidget(w)
         printLog(f"增加一个 Tab【{w.META['title']}】 位置 {self.tabWidget.count()}")
 
     @Slot(int)

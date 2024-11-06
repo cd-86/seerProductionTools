@@ -3,11 +3,11 @@ import socket
 from datetime import datetime
 
 from PySide6.QtCore import QDir, QMargins, Qt, QPoint, Slot, QThread, QFile, QFileInfo, QRegularExpression
-from PySide6.QtGui import QPainter, QPixmap, QPen, QImage, QColor, QIntValidator, QRegularExpressionValidator
+from PySide6.QtGui import QPainter, QPixmap, QImage, QColor, QRegularExpressionValidator
 from PySide6.QtMultimedia import QMediaDevices, QMediaCaptureSession, QCamera, QImageCapture
 from PySide6.QtMultimediaWidgets import QVideoWidget
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLineEdit, QLabel, QPushButton, QGroupBox, QFileDialog, \
-    QDialog, QGridLayout, QFrame, QSizePolicy, QScrollArea, QStyleOption, QStyleOptionViewItem, QStyle
+    QDialog, QGridLayout, QFrame, QSizePolicy, QScrollArea, QStyleOption, QStyle, QSplitter
 
 from init import printLog, cfg, tempDir
 from lib.RBKUtils import RBKUtils
@@ -457,9 +457,9 @@ class Thread(QThread):
         gridLayout.addWidget(alignLabel("守护进程版本"), 0, column)
         srcName = self.robot_core_robod_version_info.get("srcName")
         if not srcName:
-            srcType = self.robot_core_robod_version_info.get("srcName", -1)
+            srcType = self.robot_core_robod_version_info.get("SRCType", -1)
             if 0 <= srcType <= 4:
-                srcName = ["[SRC-2000]", "[SRC-3000]", "[SRC-800]", "[SRC-2000.2]", "[SRC-2000.1]", "[SRC-?]"][srcType]
+                srcName = ["[SRC-2000]", "[SRC-3000]", "[SRC-800]", "[SRC-2000.2]", "[SRC-2000.1]"][srcType]
             else:
                 srcName = "[SRC-?]"
         gridLayout.addWidget(alignLabel(f"{self.robot_core_robod_version_info.get('version', '')} {srcName}"), 1,
@@ -531,21 +531,29 @@ class ExportRobotInfo(QWidget):
         hLayout.addWidget(self.saveButton)
         layout.addLayout(hLayout)
 
+        splitter = QSplitter(Qt.Orientation.Vertical)
+        layout.addWidget(splitter)
+
+
         groupBox = QGroupBox("配置信息")
         groupBoxLayout = QVBoxLayout(groupBox)
         self.scrollArea = QScrollArea()
         self.infoLabel = QLabel()
+        self.infoLabel.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft)
         self.scrollArea.setWidgetResizable(True)
         self.scrollArea.setWidget(self.infoLabel)
         groupBoxLayout.addWidget(self.scrollArea)
-        layout.addWidget(groupBox)
+        splitter.addWidget(groupBox)
 
-        hLayout = QHBoxLayout()
+        picWidget = QWidget()
+
+        hLayout = QHBoxLayout(picWidget)
         self.pictureWidget1 = PictureWidgetPrivate()
         self.pictureWidget2 = PictureWidgetPrivate()
         hLayout.addWidget(self.pictureWidget1)
         hLayout.addWidget(self.pictureWidget2)
         layout.addLayout(hLayout)
+        splitter.addWidget(picWidget)
 
         self.getInfoButton.clicked.connect(self.slotGetInfoButtonClicked)
         self.saveButton.clicked.connect(self.slotSaveButtonClicked)

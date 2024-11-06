@@ -5,9 +5,9 @@ from datetime import datetime
 from PySide6.QtCore import QObject, Signal, QTemporaryDir
 
 VERSION_MAJOR = 0
-VERSION_MINOR = 1
-VERSION_PATCH = 3
-VERSION_NUMBER = 4
+VERSION_MINOR = 2
+VERSION_PATCH = 0
+VERSION_NUMBER = 5
 
 VERSION = f"{VERSION_MAJOR}.{VERSION_MINOR}.{VERSION_PATCH}"
 

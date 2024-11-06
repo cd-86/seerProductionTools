@@ -1,4 +1,4 @@
 ``` shell
-pyinstaller -w -n productionTools .\main.py
+pyinstaller -y -w -n productionTools .\main.py
 
 ```

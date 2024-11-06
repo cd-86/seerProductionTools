@@ -43,6 +43,13 @@ class SettingDialog(QDialog):
                     toolButton.setText("...")
                     gridLayout.addWidget(toolButton, i, 2)
                     toolButton.clicked.connect(self.getExistingDirectoryButtonClicked)
+                elif d["type"] == "file":
+                    w = QLineEdit(d["value"] if not (v := cfg[c, k]) else v)
+                    w.filter = d["filter"]
+                    toolButton = QToolButton()
+                    toolButton.setText("...")
+                    gridLayout.addWidget(toolButton, i, 2)
+                    toolButton.clicked.connect(self.getOpenFileNameButtonClicked)
                 elif d["type"] == "bool":
                     w = QCheckBox()
                     w.setChecked(d["value"] if not (v := cfg[c, k]) else (True if v.lower() == "true" else False))
@@ -88,6 +95,15 @@ class SettingDialog(QDialog):
         if not dir:
             return
         lineEdit.setText(dir)
+
+    def getOpenFileNameButtonClicked(self):
+        layout: QGridLayout = self.sender().parent().layout()
+        row, column, _, _ = layout.getItemPosition(layout.indexOf(self.sender()))
+        lineEdit: QLineEdit = layout.itemAtPosition(row, column - 1).widget()
+        file = QFileDialog.getOpenFileName(self, "选择文件", lineEdit.text(), lineEdit.filter)
+        if not file[0]:
+            return
+        lineEdit.setText(file[0])
 
     @Slot()
     def saveSettingButtonTriggered(self):

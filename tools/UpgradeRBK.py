@@ -1,12 +1,11 @@
 import json
-import math
 import os
 import socket
 
-from PySide6.QtCore import QDir, QRegularExpression, Qt, QModelIndex, QThread
+from PySide6.QtCore import QDir, QRegularExpression, Qt, QThread
 from PySide6.QtGui import QRegularExpressionValidator, QStandardItemModel, QStandardItem, QPainter, QPen, QColor, \
-    QPainterPath, QBrush, QRadialGradient, QConicalGradient
-from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton, QListView, QSizePolicy
+    QPainterPath
+from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton, QListView
 
 from init import cfg, printLog
 from lib.RBKUtils import RBKUtils

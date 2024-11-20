@@ -126,6 +126,7 @@ class RBKVersionValidator(QWidget):
 
         self.workThread = Thread()
         self.workThread.finished.connect(self.slotWorkThreadFinished)
+        self.srcTypeList = []
 
     def initUI(self):
         layout = QVBoxLayout(self)
@@ -233,9 +234,10 @@ class RBKVersionValidator(QWidget):
         try:
             wb = load_workbook(xlsx)
             ws: Worksheet = wb.active
-            self.model.setHorizontalHeaderLabels([ws.cell(1, column).value for column in range(1, 6)])
+            self.srcTypeList = [ws.cell(1, column).value for column in range(1, ws.max_column + 1)]
+            self.model.setHorizontalHeaderLabels(self.srcTypeList)
             for row in range(2, 7):
-                self.model.appendRow([QStandardItem(ws.cell(row, column).value) for column in range(1, 6)])
+                self.model.appendRow([QStandardItem(ws.cell(row, column).value) for column in range(1, ws.max_column + 1)])
             width = 1.0 / 5.0 * self.tableView.width()
             self.tableView.setColumnWidth(0, width)
             self.tableView.setColumnWidth(1, width)
@@ -264,28 +266,27 @@ class RBKVersionValidator(QWidget):
         self.l42.setText(self.workThread.dspVersion)
         self.l52.setText(self.workThread.gyroVersion)
 
-        try:
-            self.srcTitle.setText(self.workThread.srcName)
-            column = ["SRCNONE", "SRC880", "SRC3000", "SRC800"].index(self.workThread.srcName.upper()) + 1
-            self.l11.setText(self.model.index(0, column).data(Qt.ItemDataRole.DisplayRole))
-            self.l21.setText(self.model.index(1, column).data(Qt.ItemDataRole.DisplayRole))
-            self.l31.setText(self.model.index(2, column).data(Qt.ItemDataRole.DisplayRole))
-            self.l41.setText(self.model.index(3, column).data(Qt.ItemDataRole.DisplayRole))
-            self.l51.setText(self.model.index(4, column).data(Qt.ItemDataRole.DisplayRole))
-
-        except:
+        self.srcTitle.setText(self.workThread.srcName)
+        for i, t in enumerate(self.srcTypeList):
+            if t and t.upper() == self.workThread.srcName.upper():
+                self.l11.setText(self.model.index(0, i).data(Qt.ItemDataRole.DisplayRole))
+                self.l21.setText(self.model.index(1, i).data(Qt.ItemDataRole.DisplayRole))
+                self.l31.setText(self.model.index(2, i).data(Qt.ItemDataRole.DisplayRole))
+                self.l41.setText(self.model.index(3, i).data(Qt.ItemDataRole.DisplayRole))
+                self.l51.setText(self.model.index(4, i).data(Qt.ItemDataRole.DisplayRole))
+        else:
             printLog(self.workThread.srcName, "Error")
             self.l11.setText("")
             self.l21.setText("")
             self.l31.setText("")
             self.l41.setText("")
             self.l51.setText("")
-            return
-        self.r13.value = self.l11.text() == self.l12.text()
-        self.r23.value = self.l21.text() == self.l22.text()
-        self.r33.value = self.l31.text() == self.l32.text()
-        self.r43.value = self.l41.text() == self.l42.text()
-        self.r53.value = self.l51.text() == self.l52.text()
+
+        self.r13.value = self.l11.text() == self.l12.text() if self.l11.text() and self.l12.text() else False
+        self.r23.value = self.l21.text() == self.l22.text() if self.l21.text() and self.l22.text() else False
+        self.r33.value = self.l31.text() == self.l32.text() if self.l31.text() and self.l32.text() else False
+        self.r43.value = self.l41.text() == self.l42.text() if self.l41.text() and self.l42.text() else False
+        self.r53.value = self.l51.text() == self.l52.text() if self.l51.text() and self.l52.text() else False
 
         result = self.r13.value and self.r23.value and self.r33.value and self.r43.value and self.r53.value
         printLog(f"验证结果:{'OK' if result else 'NG'}")

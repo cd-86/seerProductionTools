@@ -1,6 +1,6 @@
 from PySide6.QtCore import Slot
 from PySide6.QtGui import Qt
-from PySide6.QtWidgets import QMainWindow, QTabWidget, QDockWidget, QListWidget, QListWidgetItem
+from PySide6.QtWidgets import QMainWindow, QTabWidget, QDockWidget, QListWidget, QListWidgetItem, QMessageBox
 
 import tools
 from LogView import LogView
@@ -19,6 +19,7 @@ class MainWindow(QMainWindow):
         # menu
         menu = self.menuBar().addMenu("文件")
         menu.addAction("设置", lambda: SettingDialog().exec())
+        self.menuBar().addAction("关于", self.aboutShow)
         # 中间是主要工作窗口
         self.tabWidget = QTabWidget(self)
         self.tabWidget.setMovable(True)
@@ -64,3 +65,12 @@ class MainWindow(QMainWindow):
     def tabWidgetTabCloseRequested(self, index):
         printLog(f"删除一个 Tab【{self.tabWidget.tabText(index)}】 位置 {index + 1}")
         self.tabWidget.removeTab(index)
+
+    @Slot()
+    def aboutShow(self):
+        QMessageBox.about(self, "关于", f"<h3 style='text-align: center;'>生产工具</h3>"
+                                        f"<div><a href='https://github.com/cd-86/seerProductionTools'>版本：v{VERSION}</a></div>"
+                                        f"<div><a href='https://pypi.org/project/PySide6/'>Pyside6</a></div>"
+                                        f"<hr></hr>"
+                                        f"<a href='https://www.seer-group.com/'>Copyright © 2024 上海仙工智能科技有限公司</a>"
+                          )

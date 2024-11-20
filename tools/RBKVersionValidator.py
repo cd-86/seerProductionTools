@@ -274,6 +274,7 @@ class RBKVersionValidator(QWidget):
                 self.l31.setText(self.model.index(2, i).data(Qt.ItemDataRole.DisplayRole))
                 self.l41.setText(self.model.index(3, i).data(Qt.ItemDataRole.DisplayRole))
                 self.l51.setText(self.model.index(4, i).data(Qt.ItemDataRole.DisplayRole))
+                break
         else:
             printLog(self.workThread.srcName, "Error")
             self.l11.setText("")

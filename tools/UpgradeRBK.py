@@ -43,7 +43,7 @@ class Thread(QThread):
         self.ip = "192.168.192.5"
         self.filePath = ""
 
-        self.updateState = 0 # 0: 1:成功 2:失败
+        self.updateState = 0  # 0: 1:成功 2:失败
 
     def run(self):
         self.updateState = 0
@@ -52,17 +52,27 @@ class Thread(QThread):
             return
 
         with open(self.filePath, "rb") as f:
-            data = f.read()
+            zipData = f.read()
 
         try:
             printLog(f"连接 {self.ip}:19208")
             so: socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             so.connect((self.ip, 19208))
             # so.settimeout(60)
+            printLog("查询 Robod 版本")
+            _, data = RBKUtils.request(so, 5041)
+            version_info: dict = json.loads(data)
+            vs = version_info.get("version").split(".")
+
             printLog(f"上传升级包 {self.filePath} {self.ip}")
-            RBKUtils.request(so, 5104, data)
-            req = RBKUtils.pack(5104, data)
-            so.sendall(req)
+            if int(vs[0]) >= 5:
+                js = {
+                    "type": "upgradeSRC",
+                    "fileName": "upgrade_pkg.zip"
+                }
+                RBKUtils.request(so, 5136, js, zipData)
+            else:
+                RBKUtils.request(so, 5104, None, zipData)
             printLog(f"升级包上传成功 {self.ip}")
 
             recvData = b''
@@ -79,7 +89,7 @@ class Thread(QThread):
                     except:
                         recvData = recvData[1:]
                         continue
-                    if header[0] == 90 and header[1] == 1:
+                    if header[0] == 0x5A and header[1] == 0x01:
                         recvData = recvData[16:]
                         break
                     recvData = recvData[1:]
@@ -92,11 +102,12 @@ class Thread(QThread):
                     bodyLen -= len(recv)
                     if bodyLen < readSize:
                         readSize = bodyLen
+                print(header[4])
                 if header[4] == 15125:
                     try:
-                        js = json.loads(recvData[:header[3]])
+                        js = json.loads(recvData[header[6]:header[3]])
                     except:
-                        printLog(str(recvData[:header[3]]))
+                        printLog(str(recvData[header[6]:header[3]]))
                     else:
                         reductionStatus = js.get("reductionStatus", "")
                         upgradeStatus = js.get("upgradeStatus", "")
@@ -104,6 +115,33 @@ class Thread(QThread):
                             printLog(Thread.upgradeStatusDict.get(upgradeStatus, upgradeStatus).rstrip())
                         elif reductionStatus:
                             printLog(Thread.reductionStatusDict.get(reductionStatus, reductionStatus).rstrip())
+                elif header[4] == 15136:
+                    try:
+                        js = json.loads(recvData[:header[6]])
+                        if "err_msg" in js:
+                            try:
+                                js = json.loads(recvData[header[6]:header[3]])
+                            except:
+                                printLog(str(recvData[header[6]:header[3]]))
+                            else:
+                                printLog(js)
+                            printLog()
+                            printLog(f"升级失败 {self.ip}")
+                            printLog(f"关闭连接 {self.ip}:19208")
+                            so.close()
+                            self.updateState = 2
+                            break
+                        else:
+                            printLog(f"升级完成 {self.ip}")
+                            printLog(f"关闭连接 {self.ip}:19208")
+                            so.close()
+                            self.updateState = 1
+                            break
+                    except:
+                        printLog(str(recvData[:header[6]]))
+                    else:
+                        printLog(js)
+
                 elif header[4] == 15104:
                     if header[3] == 0:
                         printLog(f"升级完成 {self.ip}")
@@ -111,14 +149,20 @@ class Thread(QThread):
                         so.close()
                         self.updateState = 1
                         break
-                    try:
-                        js = json.loads(recvData[:header[3]])
-                    except:
-                        printLog(str(recvData[:header[3]]))
                     else:
-                        printLog(js)
+                        try:
+                            js = json.loads(recvData[header[6]:header[3]])
+                        except:
+                            printLog(str(recvData[header[6]:header[3]]))
+                        else:
+                            printLog(js)
+                        printLog(f"升级失败 {self.ip}")
+                        printLog(f"关闭连接 {self.ip}:19208")
+                        so.close()
+                        self.updateState = 2
+                        break
                 else:
-                    printLog(header[4], str(recvData[:header[3]]))
+                    printLog(header[4], str(recvData[header[6]:header[3]]))
                 recvData = recvData[header[3]:]
         except Exception as e:
             printLog("Exception:,", e)

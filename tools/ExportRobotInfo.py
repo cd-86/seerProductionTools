@@ -197,26 +197,78 @@ class Thread(QThread):
         self.robot_core_status_info = {}
         self.robot_core_robod_version_info = {}
 
+        self.robot_all_network_interfaces = {}
+        self.robot_cpu_serial_for_robot_id = {}
+        self.robot_last_imported_param_file_name = {}
+
         self.widgetPixmap: QPixmap = None
+        self.robodVersion = -1
+        self.rbkVersion = ""
+        self.rbkVersionMajor = 0
 
     def run(self):
+
+        self.robotID = ""
+        self.robot_status_info = {}
+        self.robot_status_run_info = {}
+        self.robot_status_battery_info = {}
+        self.robot_status_alarm_info = {}
+
+        self.robot_core_status_info = {}
+        self.robot_core_robod_version_info = {}
+
+        self.robot_all_network_interfaces = {}
+        self.robot_cpu_serial_for_robot_id = {}
+        self.robot_last_imported_param_file_name = {}
+
+        self.widgetPixmap: QPixmap = None
+        self.robodVersion = -1
+        self.rbkVersion = ""
+        self.rbkVersionMajor = 0
+
         try:
             printLog(f"连接 {self.ip}:19204")
             so: socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             so.connect((self.ip, 19204))
             so.settimeout(60)
             printLog("查询机器人信息")
-            data = RBKUtils.request(so, 1000)
+            _, data = RBKUtils.request(so, 1000)
             self.robot_status_info = json.loads(data)
-            printLog("查询机器人运行信息")
-            data = RBKUtils.request(so, 1002)
-            self.robot_status_run_info = json.loads(data)
-            printLog("查询机器人电池信息")
-            data = RBKUtils.request(so, 1007)
-            self.robot_status_battery_info = json.loads(data)
-            printLog("查询机器人报警信息")
-            data = RBKUtils.request(so, 1050)
-            self.robot_status_alarm_info = json.loads(data)
+
+            self.rbkVersion = self.robot_status_info.get("version", "")
+            try:
+                self.rbkVersionMajor = int(self.rbkVersion.split(".")[0][-1])
+            except:
+                self.rbkVersionMajor = 0
+            printLog("Robokit版本：", self.rbkVersion)
+            if self.rbkVersionMajor >= 4:
+                printLog("查询机器人报警信息")
+                js = {
+                    "node_name": "ServiceNetProtocol",
+                    "service_name": "serviceDispatcher",
+                    "request": {
+                        "dataType": "json",
+                        "func_name": "getAllChannelData",
+                        "list": [
+                            {
+                                "channelName": "alarms",
+                                "messageName": "rbk4.protocol.Message_Alarms"
+                            }
+                        ]
+                    }
+                }
+                _, data = RBKUtils.request(so, 1999, js)
+                self.robot_status_alarm_info = json.loads(data)
+            else:
+                printLog("查询机器人运行信息")
+                _, data = RBKUtils.request(so, 1002)
+                self.robot_status_run_info = json.loads(data)
+                printLog("查询机器人电池信息")
+                _, data = RBKUtils.request(so, 1007)
+                self.robot_status_battery_info = json.loads(data)
+                printLog("查询机器人报警信息")
+                _, data = RBKUtils.request(so, 1050)
+                self.robot_status_alarm_info = json.loads(data)
         except Exception as e:
             printLog("Exception:,", e)
             self.widgetPixmap = None
@@ -229,12 +281,27 @@ class Thread(QThread):
             so: socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             so.connect((self.ip, 19208))
             so.settimeout(60)
-            printLog("查询查询 Robokit 运行状态")
-            data = RBKUtils.request(so, 5011)
-            self.robot_core_status_info = json.loads(data)
             printLog("查询 Robod 版本")
-            data = RBKUtils.request(so, 5041)
+            _, data = RBKUtils.request(so, 5041)
             self.robot_core_robod_version_info = json.loads(data)
+
+            version_info: dict = json.loads(data)
+            self.robodVersion = int(version_info.get("version").split(".")[0])
+            printLog("查询查询 Robokit 运行状态")
+
+            if self.robodVersion >= 5:
+                _, data = RBKUtils.request(so, 5136, {"type": "getAllNetworkInterfaces"})
+                self.robot_all_network_interfaces = json.loads(data)
+                _, data = RBKUtils.request(so, 5136, {"type": "getCpuSerialForRobotID"})
+                self.robot_cpu_serial_for_robot_id = json.loads(data)
+                _, data = RBKUtils.request(so, 5136, {"type": "getLastImportedParamFileName"})
+                self.robot_last_imported_param_file_name = json.loads(data)
+
+                _, data = RBKUtils.request(so, 5136, {"type": "getRBKStatus"})
+            else:
+                _, data = RBKUtils.request(so, 5011)
+
+            self.robot_core_status_info = json.loads(data)
         except Exception as e:
             printLog("Exception:,", e)
             self.widgetPixmap = None
@@ -270,6 +337,30 @@ class Thread(QThread):
             label = QLabel(txt)
             label.setAlignment(Qt.AlignmentFlag.AlignCenter)
             return label
+
+        #
+        robot_id = ""
+        robot_name = ""
+        model = ""
+        MAC = ""
+        WLANMAC = ""
+        if self.robodVersion >= 5:
+            robot_id = self.robot_cpu_serial_for_robot_id.get('cpuSerialForRobotID', "")
+            robot_name = self.robot_status_info.get('robot_name', "")
+            model = self.robot_last_imported_param_file_name.get("lastImportedParamFileName", "")
+            lst = self.robot_all_network_interfaces.get("list", [])
+            for d in lst:
+                typeName = d.get("humanReadableName", "")
+                if typeName == "eth0":
+                    MAC = d.get("hardwareAddress", "")
+                if typeName == "wlan0":
+                    WLANMAC = d.get("hardwareAddress", "")
+        else:
+            robot_id = self.robot_status_info.get('id', "")
+            robot_name = self.robot_status_info.get('vehicle_id', "")
+            model = self.robot_status_info.get('model', "")
+            MAC = self.robot_status_info.get('MAC', "")
+            WLANMAC = self.robot_status_info.get('WLANMAC', "")
 
         w = QWidget()
         layout = QVBoxLayout(w)
@@ -336,20 +427,20 @@ class Thread(QThread):
         gridLayout.setAlignment(Qt.AlignmentFlag.AlignTop)
         row = 0
         gridLayout.addWidget(QLabel("机器人ID"), row, 0)
-        gridLayout.addWidget(QLabel(self.robot_status_info.get('id', "")), row, 1)
+        gridLayout.addWidget(QLabel(robot_id), row, 1)
         row += 1
         gridLayout.addWidget(QLabel("机器人名称"), row, 0)
-        gridLayout.addWidget(QLabel(self.robot_status_info.get('vehicle_id', "")), row, 1)
+        gridLayout.addWidget(QLabel(robot_name), row, 1)
         row += 1
         gridLayout.addWidget(QLabel("机器人备注"), row, 0)
         gridLayout.addWidget(QLabel(self.robot_status_info.get('robot_note', "")), row, 1)
         row += 1
         gridLayout.addWidget(QLabel("机器人型号"), row, 0)
-        gridLayout.addWidget(QLabel(self.robot_status_info.get('model', "")), row, 1)
+        gridLayout.addWidget(QLabel(model), row, 1)
         row += 1
         gridLayout.addWidget(QLabel("Robokit版本"), row, 0)
         gridLayout.addWidget(
-            QLabel(f"{self.robot_status_info.get('version', '')}({self.robot_status_info.get('architecture', '')})"),
+            QLabel(f"{self.rbkVersion}({self.robot_status_info.get('architecture', '')})"),
             row, 1)
         row += 1
         gridLayout.addWidget(QLabel("底层固件版本"), row, 0)
@@ -371,10 +462,10 @@ class Thread(QThread):
         gridLayout.addWidget(QLabel(self.robot_status_info.get('model_version', "")), row, 1)
         row += 1
         gridLayout.addWidget(QLabel("MAC"), row, 0)
-        gridLayout.addWidget(QLabel(self.robot_status_info.get('MAC', "")), row, 1)
+        gridLayout.addWidget(QLabel(MAC), row, 1)
         row += 1
         gridLayout.addWidget(QLabel("无线网 MAC"), row, 0)
-        gridLayout.addWidget(QLabel(self.robot_status_info.get('WLANMAC', "")), row, 1)
+        gridLayout.addWidget(QLabel(WLANMAC), row, 1)
         hLayout.addWidget(statusGroup)
         # 网卡信息单独放一个group
         statusGroup = QGroupBox("网卡信息")
@@ -439,7 +530,7 @@ class Thread(QThread):
         gridLayout.addWidget(newLine(QFrame.Shape.VLine), 0, column, 2, 1)
         column += 1
         gridLayout.addWidget(alignLabel("CPU占用率"), 0, column)
-        if self.robot_core_status_info.get("cpu_num") <= 0:
+        if self.robot_core_status_info.get("cpu_num", 0) <= 0:
             txt = f"{self.robot_core_status_info.get('cpu'):.1f}% 温度 {self.robot_core_status_info.get('cpu_temp'):.1f} ℃"
         else:
             txt = f"{self.robot_core_status_info.get('cpu') / self.robot_core_status_info.get('cpu_num'):.1f}% ({self.robot_core_status_info.get('cpu'):.1f}%/{self.robot_core_status_info.get('cpu_num')}) 温度 {self.robot_core_status_info.get('cpu_temp'):.1f} ℃"
@@ -469,12 +560,19 @@ class Thread(QThread):
         # 报警的信息放在底部
         statusGroup = QGroupBox("报警信息")
         vBoxLayout = QVBoxLayout(statusGroup)
-        for k in ["errors", "fatals", "notices", "warnings"]:
-            for d in self.robot_status_alarm_info.get(k, []):
-                if not isinstance(d, dict):
-                    continue
-                vBoxLayout.addWidget(QLabel(
-                    f"[{d.get('dateTime', '')}][{d.get('code', '')}][第{d.get('times', '')}次]{d.get('desc', '')}"))
+        if self.rbkVersionMajor >= 4:
+            alarms = self.robot_status_alarm_info.get("alarms",{})
+            for v in alarms.values():
+                for d in v.get("map", {}).values():
+                    vBoxLayout.addWidget(QLabel(
+                        f"[{d.get('timestamp', '')}][{d.get('code', '')}][第{d.get('times', '')}次]{d.get('desc', '')}"))
+        else:
+            for k in ["errors", "fatals", "notices", "warnings"]:
+                for d in self.robot_status_alarm_info.get(k, []):
+                    if not isinstance(d, dict):
+                        continue
+                    vBoxLayout.addWidget(QLabel(
+                        f"[{d.get('dateTime', '')}][{d.get('code', '')}][第{d.get('times', '')}次]{d.get('desc', '')}"))
         layout.addWidget(statusGroup)
 
         # 渲染
@@ -484,9 +582,12 @@ class Thread(QThread):
         # 右下角加一个时间水印
         painter = QPainter(pixmap)
         painter.setPen(QColor(255, 0, 0, 100))
-        painter.drawText(pixmap.rect() - QMargins(0, 0, 20, 20), Qt.AlignmentFlag.AlignBottom | Qt.AlignmentFlag.AlignRight, datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+        painter.drawText(pixmap.rect() - QMargins(0, 0, 20, 20),
+                         Qt.AlignmentFlag.AlignBottom | Qt.AlignmentFlag.AlignRight,
+                         datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
         painter.end()
         self.widgetPixmap = pixmap
+
 
 class ExportRobotInfo(QWidget):
     META = {
@@ -522,7 +623,8 @@ class ExportRobotInfo(QWidget):
         hLayout = QHBoxLayout()
         hLayout.addWidget(QLabel("IP:"))
         self.ipLineEdit = QLineEdit("192.168.192.5")
-        self.ipLineEdit.setValidator(QRegularExpressionValidator(QRegularExpression(r"((2(5[0-5]|[0-4]\d))|[0-1]?\d{1,2})(\.((2(5[0-5]|[0-4]\d))|[0-1]?\d{1,2})){3}"), self))
+        self.ipLineEdit.setValidator(QRegularExpressionValidator(
+            QRegularExpression(r"((2(5[0-5]|[0-4]\d))|[0-1]?\d{1,2})(\.((2(5[0-5]|[0-4]\d))|[0-1]?\d{1,2})){3}"), self))
         hLayout.addWidget(self.ipLineEdit)
         self.getInfoButton = QPushButton("获取配置信息")
         self.saveButton = QPushButton("导出机器人配置信息")
@@ -533,7 +635,6 @@ class ExportRobotInfo(QWidget):
 
         splitter = QSplitter(Qt.Orientation.Vertical)
         layout.addWidget(splitter)
-
 
         groupBox = QGroupBox("配置信息")
         groupBoxLayout = QVBoxLayout(groupBox)
@@ -598,7 +699,6 @@ class ExportRobotInfo(QWidget):
             json.dump(self.workThread.robot_core_robod_version_info, f)
         printLog(f"完成")
 
-
     def slotWorkThreadFinished(self):
         if self.workThread.widgetPixmap is not None:
             self.infoLabel.setPixmap(self.workThread.widgetPixmap)
@@ -610,7 +710,6 @@ class ExportRobotInfo(QWidget):
 
     def dragMoveEvent(self, event):
         event.accept()
-
 
     def dropEvent(self, event):
         if event.mimeData().hasUrls():

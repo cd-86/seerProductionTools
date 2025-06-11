@@ -24,7 +24,7 @@ class Thread(QThread):
             so.connect((self.ip, 19204))
             so.settimeout(60)
             printLog("查询机器人信息")
-            data = RBKUtils.request(so, 1000)
+            _, data = RBKUtils.request(so, 1000)
             robot_status_info = json.loads(data)
         except Exception as e:
             printLog("Exception:,", e)
@@ -95,7 +95,7 @@ class Thread(QThread):
             so.connect((self.ip, 19208))
             so.settimeout(60)
             printLog(f"激活 {self.ip}")
-            RBKUtils.request(so, 5106, d)
+            RBKUtils.request(so, 5106, None, d)
             printLog(f"授权文件上传 {self.ip} 成功")
         except Exception as e:
             printLog("Exception:,", e)

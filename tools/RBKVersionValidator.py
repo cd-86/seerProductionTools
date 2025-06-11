@@ -34,7 +34,7 @@ class Thread(QThread):
             so.connect((self.ip, 19204))
             so.settimeout(60)
             printLog("查询机器人信息")
-            data = RBKUtils.request(so, 1000)
+            _, data = RBKUtils.request(so, 1000)
             robot_status_info = json.loads(data)
             self.rbkVersion = robot_status_info.get('version', '')
             self.dspVersion = robot_status_info.get('dsp_version', "")
@@ -57,7 +57,7 @@ class Thread(QThread):
             so.connect((self.ip, 19208))
             so.settimeout(60)
             printLog("查询 Robod 版本")
-            data = RBKUtils.request(so, 5041)
+            _, data = RBKUtils.request(so, 5041)
             robot_core_robod_version_info = json.loads(data)
 
             self.srcName = robot_core_robod_version_info.get("srcName")

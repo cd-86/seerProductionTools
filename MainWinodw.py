@@ -70,7 +70,11 @@ class MainWindow(QMainWindow):
     def aboutShow(self):
         QMessageBox.about(self, "关于", f"<h3 style='text-align: center;'>生产工具</h3>"
                                         f"<div><a href='https://github.com/cd-86/seerProductionTools'>版本：v{VERSION}</a></div>"
+                                        f"<hr></hr>"
+                                        f"<p>开源软件</p>"
                                         f"<div><a href='https://pypi.org/project/PySide6/'>Pyside6</a></div>"
+                                        f"<div><a href='https://pypi.org/project/requests/'>requests</a></div>"
+                                        f"<div><a href='https://pypi.org/project/openpyxl/'>openpyxl</a></div>"
                                         f"<hr></hr>"
                                         f"<a href='https://www.seer-group.com/'>Copyright © 2024 上海仙工智能科技有限公司</a>"
                           )

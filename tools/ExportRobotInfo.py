@@ -7,7 +7,7 @@ from PySide6.QtGui import QPainter, QPixmap, QImage, QColor, QRegularExpressionV
 from PySide6.QtMultimedia import QMediaDevices, QMediaCaptureSession, QCamera, QImageCapture
 from PySide6.QtMultimediaWidgets import QVideoWidget
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLineEdit, QLabel, QPushButton, QGroupBox, QFileDialog, \
-    QDialog, QGridLayout, QFrame, QSizePolicy, QScrollArea, QStyleOption, QStyle, QSplitter
+    QDialog, QGridLayout, QFrame, QSizePolicy, QScrollArea, QStyleOption, QStyle, QSplitter, QSpacerItem
 
 from init import printLog, cfg, tempDir
 from lib.RBKUtils import RBKUtils
@@ -22,15 +22,34 @@ class PictureViewer(QWidget):
         super().__init__()
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
+        self.scale = 1
+        self.translate = QPoint(0, 0)
+        self.rotation = 0
         self.pixmap: QPixmap = None
         self.prePos = QPoint(0, 0)
         self.setAttribute(Qt.WidgetAttribute.WA_StyleSheet, True)
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, True)
 
+        layout = QVBoxLayout(self)
+        hbox = QHBoxLayout()
+        self.btn = QPushButton("旋转")
+        hbox.addSpacerItem(QSpacerItem(1, 1, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum))
+        hbox.addWidget(self.btn)
+        layout.addLayout(hbox)
+        layout.addSpacerItem(QSpacerItem(1, 1, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding))
+
+        self.btn.clicked.connect(self.slotRotationClicked)
+
+    def slotRotationClicked(self):
+        self.rotation = int(self.rotation + 90) % 360
+        self.update()
+
+
     def setPixmap(self, pixmap: QPixmap):
         self.pixmap = pixmap
         self.scale = 1
         self.translate = QPoint(0, 0)
+        self.rotation = 0
 
     def paintEvent(self, event):
         painter = QPainter(self)
@@ -42,8 +61,8 @@ class PictureViewer(QWidget):
             v = min(rect.width() / self.pixmap.width(), rect.height() / self.pixmap.height())
             painter.scale(v, v)
             painter.scale(self.scale, self.scale)
-            painter.translate(-self.pixmap.width() / 2, -self.pixmap.height() / 2)
-            painter.drawPixmap(self.pixmap.rect(), self.pixmap)
+            painter.rotate(self.rotation)
+            painter.drawPixmap(self.pixmap.width() / -2, self.pixmap.height() / -2, self.pixmap.width(), self.pixmap.height(), self.pixmap)
             painter.restore()
         opt = QStyleOption()
         opt.initFrom(self)
@@ -309,7 +328,10 @@ class Thread(QThread):
         else:
             printLog(f"关闭连接 {self.ip}:19208")
             so.close()
-        self.robotID = self.robot_status_info.get('id', "")
+        if self.robodVersion >= 5:
+            self.robotID = self.robot_cpu_serial_for_robot_id.get('cpuSerialForRobotID', "")
+        else:
+            self.robotID = self.robot_status_info.get('id', "")
         printLog(f"生成机器人信息图片 {self.robotID}")
         self.offScreenRenderingWidget()
         printLog(f"完成 {self.robotID}")
@@ -339,13 +361,11 @@ class Thread(QThread):
             return label
 
         #
-        robot_id = ""
         robot_name = ""
         model = ""
         MAC = ""
         WLANMAC = ""
         if self.robodVersion >= 5:
-            robot_id = self.robot_cpu_serial_for_robot_id.get('cpuSerialForRobotID', "")
             robot_name = self.robot_status_info.get('robot_name', "")
             model = self.robot_last_imported_param_file_name.get("lastImportedParamFileName", "")
             lst = self.robot_all_network_interfaces.get("list", [])
@@ -356,7 +376,6 @@ class Thread(QThread):
                 if typeName == "wlan0":
                     WLANMAC = d.get("hardwareAddress", "")
         else:
-            robot_id = self.robot_status_info.get('id', "")
             robot_name = self.robot_status_info.get('vehicle_id', "")
             model = self.robot_status_info.get('model', "")
             MAC = self.robot_status_info.get('MAC', "")
@@ -427,7 +446,7 @@ class Thread(QThread):
         gridLayout.setAlignment(Qt.AlignmentFlag.AlignTop)
         row = 0
         gridLayout.addWidget(QLabel("机器人ID"), row, 0)
-        gridLayout.addWidget(QLabel(robot_id), row, 1)
+        gridLayout.addWidget(QLabel(self.robotID), row, 1)
         row += 1
         gridLayout.addWidget(QLabel("机器人名称"), row, 0)
         gridLayout.addWidget(QLabel(robot_name), row, 1)

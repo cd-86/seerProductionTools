@@ -94,8 +94,16 @@ class Thread(QThread):
             so: socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             so.connect((self.ip, 19208))
             so.settimeout(60)
+            printLog("查询 Robod 版本")
+            _, data = RBKUtils.request(so, 5041)
+
+            version_info: dict = json.loads(data)
+            robodVersion = int(version_info.get("version").split(".")[0])
             printLog(f"激活 {self.ip}")
-            RBKUtils.request(so, 5106, None, d)
+            if robodVersion >= 5:
+                RBKUtils.request(so, 5106, {"type": "activeRobot"}, d)
+            else:
+                RBKUtils.request(so, 5106, None, d)
             printLog(f"授权文件上传 {self.ip} 成功")
         except Exception as e:
             printLog("Exception:,", e)

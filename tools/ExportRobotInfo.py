@@ -306,7 +306,7 @@ class Thread(QThread):
 
             version_info: dict = json.loads(data)
             self.robodVersion = int(version_info.get("version").split(".")[0])
-            printLog("查询查询 Robokit 运行状态")
+            printLog("查询 Robokit 运行状态")
 
             if self.robodVersion >= 5:
                 _, data = RBKUtils.request(so, 5136, {"type": "getAllNetworkInterfaces"})

@@ -89,6 +89,7 @@ class Thread(QThread):
             return
 
         d = res.text.encode()
+        printLog("授权信息：", d)
         try:
             printLog(f"连接 {self.ip}:19208")
             so: socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -99,12 +100,13 @@ class Thread(QThread):
 
             version_info: dict = json.loads(data)
             robodVersion = int(version_info.get("version").split(".")[0])
-            printLog(f"激活 {self.ip}")
+            printLog("Robod版本：", version_info.get("version"), "主版本：", robodVersion)
+            printLog(f"上传授权文件 ({'新' if robodVersion >= 5 else '旧'}协议) {self.ip}")
             if robodVersion >= 5:
-                RBKUtils.request(so, 5106, {"type": "activeRobot"}, d)
+                j, d = RBKUtils.request(so, 5136, {"type": "activeRobot"}, d)
             else:
-                RBKUtils.request(so, 5106, None, d)
-            printLog(f"授权文件上传 {self.ip} 成功")
+                j, d = RBKUtils.request(so, 5106, None, d)
+            printLog("上传授权响应：", j, d)
         except Exception as e:
             printLog("Exception:,", e)
             return
